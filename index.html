@@ -1,0 +1,1927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pedo Earn - Reward Platform</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://telegram.org/js/telegram-web-app.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js">
+    </script>
+    <!-- Monetag SDK (for Ads 1 and Survey) -->
+    <script src='//libtl.com/sdk.js' data-zone='10541383' data-sdk='show_10541383'></script>
+    <!-- Giga Pub SDK (for Ads 2) -->
+    <script src="https://ad.gigapub.tech/script?id=6432"></script>
+    <!-- Adsgram SDK (for Ads 3) -->
+    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+    <!-- Adexora SDK (for Ads 4) -->
+    <script src="https://adexora.com/cdn/ads.js?id=1963"></script>
+    <style>
+        /* styles unchanged, same as previous */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background: #f5f7fa;
+            display: flex;
+            justify-content: center;
+        }
+        .app-container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: #ffffff;
+            position: relative;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.05);
+        }
+        .loading-screen {
+            position: fixed;
+            inset: 0;
+            background: #fff;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .loading-screen.hidden {
+            display: none;
+        }
+        .loading-logo {
+            width: 95px;
+            height: 95px;
+            border-radius: 32px;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        .loading-logo i {
+            font-size: 2.6rem;
+            color: #FFD966;
+        }
+        .loading-title {
+            font-size: 1.9rem;
+            font-weight: 800;
+            color: #000;
+            letter-spacing: -0.5px;
+        }
+        .loading-progress {
+            width: 260px;
+            height: 5px;
+            background: #eaeef2;
+            border-radius: 6px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        .loading-progress-fill {
+            width: 0%;
+            height: 100%;
+            background: #000;
+            transition: width 0.05s linear;
+        }
+        .loading-percent {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #000;
+            margin-top: 8px;
+        }
+        .balance-card {
+            background: linear-gradient(145deg, #f8fafc, #fff);
+            border-radius: 32px;
+            padding: 28px;
+            margin-bottom: 24px;
+            margin-top: 20px;
+            border: 1px solid #eef2f6;
+        }
+        .balance-amount {
+            font-size: 3rem;
+            font-weight: 800;
+            margin: 12px 0 4px;
+            color: #000;
+        }
+        .usd-equivalent {
+            font-size: 0.9rem;
+            color: #2c3e66;
+            font-weight: 500;
+            margin-top: 6px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+        .stat-card {
+            background: #f8fafc;
+            border-radius: 24px;
+            padding: 18px 8px;
+            text-align: center;
+            border: 1px solid #eef2f6;
+        }
+        .stat-value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #000;
+        }
+        .stat-label {
+            font-size: 0.75rem;
+            color: #475569;
+            margin-top: 6px;
+            font-weight: 500;
+        }
+        .about-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin: 20px 0 10px;
+        }
+        .about-card {
+            background: #fff;
+            border-radius: 28px;
+            padding: 20px 12px;
+            text-align: center;
+            border: 1px solid #eef2f6;
+            transition: transform 0.2s;
+        }
+        .about-card:hover {
+            transform: translateY(-3px);
+        }
+        .about-icon {
+            font-size: 2rem;
+            background: #f1f5f9;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 14px;
+            border-radius: 30px;
+            color: #000;
+        }
+        .about-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+        .about-desc {
+            font-size: 0.7rem;
+            color: #475569;
+            margin-top: 4px;
+        }
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #fff;
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 22px;
+            border-top: 1px solid #eef2f6;
+            max-width: 500px;
+            margin: 0 auto;
+            z-index: 100;
+        }
+        .nav-btn {
+            background: none;
+            border: none;
+            color: #64748b;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.65rem;
+            padding: 8px;
+            flex: 1;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: 500;
+        }
+        .nav-btn i {
+            font-size: 1.4rem;
+            color: #64748b;
+        }
+        .nav-btn.active {
+            color: #000;
+            background: #f1f5f9;
+        }
+        .nav-btn.active i {
+            color: #000;
+        }
+        .content-section {
+            display: none;
+            padding: 20px;
+            padding-bottom: 90px;
+            animation: fadeIn 0.25s ease;
+        }
+        .content-section.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .task-card {
+            background: #fff;
+            border-radius: 28px;
+            padding: 22px;
+            margin-bottom: 24px;
+            border: 1px solid #eef2f6;
+        }
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .task-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #000;
+        }
+        .task-reward {
+            background: #f1f5f9;
+            padding: 4px 14px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        .task-desc {
+            color: #475569;
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+        }
+        .progress-container {
+            margin: 16px 0 12px;
+        }
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #334155;
+            margin-bottom: 6px;
+        }
+        .progress-bar-bg {
+            background: #e2e8f0;
+            border-radius: 60px;
+            height: 8px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            background: #000;
+            width: 0%;
+            height: 100%;
+            border-radius: 60px;
+            transition: width 0.3s;
+        }
+        .completion-stats {
+            font-size: 0.7rem;
+            color: #475569;
+            text-align: right;
+            margin-top: 6px;
+        }
+        .task-btn {
+            background: #000;
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 12px 16px;
+            border-radius: 60px;
+            width: 100%;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: 0.2s;
+        }
+        .task-btn:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+        }
+        .task-btn.completed {
+            background: #22c55e;
+        }
+        .task-btn.timer-active {
+            background: #f59e0b;
+        }
+        .toast-notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 60px;
+            font-weight: 600;
+            z-index: 4000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideDown 0.3s ease;
+        }
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+        .payment-option {
+            background: #f1f5f9;
+            border-radius: 60px;
+            padding: 14px 20px;
+            margin: 12px 0;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: 0.2s;
+        }
+        .payment-option.selected {
+            border-color: #000;
+            background: #fff;
+        }
+        .form-input {
+            width: 100%;
+            padding: 14px 18px;
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            border-radius: 60px;
+            margin: 12px 0;
+            font-size: 0.95rem;
+        }
+        .withdraw-btn {
+            background: #000;
+            color: white;
+            font-weight: 600;
+            padding: 16px;
+            border-radius: 60px;
+            width: 100%;
+            border: none;
+            font-size: 1rem;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+        .withdraw-btn:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+        }
+        .btn-primary {
+            background: #000;
+            padding: 12px 18px;
+            border-radius: 40px;
+            border: none;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .referral-professional {
+            background: #f8fafc;
+            border-radius: 36px;
+            padding: 30px;
+            text-align: center;
+            border: 1px solid #eef2f6;
+        }
+        .referral-code-display {
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            padding: 14px;
+            border-radius: 60px;
+            margin: 20px 0;
+            font-weight: 600;
+            word-break: break-all;
+        }
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #334155;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .modal,
+        .referral-code-modal,
+        .claim-modal,
+        .survey-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(3px);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active,
+        .referral-code-modal.active,
+        .claim-modal.active,
+        .survey-modal.active {
+            display: flex;
+        }
+        .modal-content,
+        .referral-code-card,
+        .claim-card,
+        .survey-card {
+            background: #fff;
+            border-radius: 40px;
+            padding: 32px;
+            max-width: 360px;
+            width: 90%;
+            text-align: center;
+        }
+        .claim-btn {
+            background: #000;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 40px;
+            font-weight: 600;
+            margin-top: 12px;
+            cursor: pointer;
+            width: 100%;
+        }
+        .skip-btn {
+            background: #f1f5f9;
+            color: #334155;
+        }
+        .small-text {
+            font-size: 0.7rem;
+            color: #64748b;
+            margin-top: 8px;
+        }
+        .fee-breakdown {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #eef2f6;
+            font-size: 0.95rem;
+        }
+        .friend-card {
+            background: #f8fafc;
+            border-radius: 24px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            border: 1px solid #eef2f6;
+        }
+        .withdrawal-history-card {
+            background: #f8fafc;
+            border-radius: 24px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 3px solid #000;
+        }
+        .pending-card {
+            background: #fff7ed;
+            border-left: 3px solid #f97316;
+            padding: 12px;
+            border-radius: 20px;
+            margin-bottom: 10px;
+        }
+        .stats-box {
+            background: #f8fafc;
+            border-radius: 24px;
+            padding: 16px;
+            margin-bottom: 16px;
+            text-align: center;
+            border: 1px solid #eef2f6;
+        }
+        .stats-box-title {
+            font-weight: 600;
+            color: #334155;
+            font-size: 0.85rem;
+        }
+        .stats-box-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #000;
+            margin-top: 4px;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .support-icon {
+            background: #000;
+            width: 40px;
+            height: 40px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .support-icon i {
+            color: white;
+            font-size: 1.2rem;
+        }
+        .one-time-task {
+            background: linear-gradient(135deg, #fef9e3, #fff);
+            border-left: 4px solid #f59e0b;
+        }
+        .cooldown-text {
+            font-size: 0.8rem;
+            color: #f97316;
+            margin-top: 8px;
+            text-align: center;
+        }
+        .withdraw-requirements-box {
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+            border-radius: 32px;
+            padding: 20px;
+            margin: 24px 0;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.03);
+        }
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 0;
+            border-bottom: 1px solid #eef2f6;
+        }
+        .requirement-item:last-child {
+            border-bottom: none;
+        }
+        .req-icon {
+            width: 48px;
+            height: 48px;
+            background: #f1f5f9;
+            border-radius: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+        }
+        .req-icon i {
+            color: #000;
+        }
+        .req-details {
+            flex: 1;
+        }
+        .req-title {
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .req-value {
+            font-size: 0.8rem;
+            color: #475569;
+            margin-top: 4px;
+        }
+        .req-status {
+            width: 32px;
+            height: 32px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .status-success {
+            background: #22c55e20;
+            color: #22c55e;
+        }
+        .status-failed {
+            background: #ef444420;
+            color: #ef4444;
+        }
+        .requirement-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            color: #1e293b;
+            font-weight: 600;
+        }
+        .requirement-header i {
+            font-size: 1.2rem;
+        }
+        .pending-detail-text {
+            font-size: 0.7rem;
+            color: #64748b;
+            margin-top: 4px;
+            word-break: break-all;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #64748b;
+        }
+        .empty-state i {
+            font-size: 3rem;
+            color: #cbd5e1;
+            margin-bottom: 16px;
+        }
+        .howto-btn {
+            background: #f1f5f9;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .howto-btn i {
+            font-size: 0.8rem;
+        }
+        .survey-option {
+            display: block;
+            margin: 8px 0;
+            text-align: left;
+            padding: 10px 14px;
+            background: #f8fafc;
+            border-radius: 60px;
+            cursor: pointer;
+            border: 1px solid #e2e8f0;
+            font-size: 0.9rem;
+        }
+        .survey-option.selected {
+            background: #eef2ff;
+            border-color: #000;
+        }
+        .survey-question-text {
+            font-weight: 600;
+            margin-bottom: 16px;
+            text-align: left;
+            font-size: 1rem;
+        }
+        .survey-nav-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .timer-text {
+            font-size: 0.9rem;
+            color: #f59e0b;
+            font-weight: 600;
+            margin-top: 8px;
+            text-align: center;
+        }
+        .campaign-card {
+            background: linear-gradient(135deg, #f0f4ff, #fff);
+            border: 2px dashed #3b82f6;
+            border-radius: 28px;
+            padding: 24px;
+            text-align: center;
+            margin-bottom: 24px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .campaign-card:hover {
+            transform: scale(1.01);
+            background: #eef2ff;
+        }
+        .campaign-card i {
+            font-size: 2.5rem;
+            color: #3b82f6;
+            margin-bottom: 12px;
+        }
+        .campaign-card h3 {
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+        .campaign-card p {
+            font-size: 0.85rem;
+            color: #475569;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-logo"><i class="fas fa-coins"></i><i class="fas fa-chart-line"></i></div>
+        <div class="loading-title">Pedo</div>
+        <div class="loading-progress"><div class="loading-progress-fill" id="loadingFill"></div></div>
+        <div class="loading-percent" id="loadingPercent">0%</div>
+    </div>
+
+    <div class="app-container" id="mainApp" style="display:none;">
+
+        <!-- HOME -->
+        <div id="homeSection" class="content-section active">
+            <div class="section-header"><div></div><div class="support-icon" id="supportIconHome"><i class="fas fa-headset"></i></div></div>
+            <div class="balance-card">
+                <div style="font-weight:500;color:#475569;">YOUR BALANCE</div>
+                <div class="balance-amount" id="balanceAmount">0</div>
+                <div class="usd-equivalent" id="usdBalanceHome">~ $0.000 USD</div>
+                <div class="small-text">PEDO COIN</div>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-value" id="refCount">0</div><div class="stat-label">Referrals</div></div>
+                <div class="stat-card"><div class="stat-value" id="tasksCompletedCount">0</div><div class="stat-label">Tasks Done</div></div>
+                <div class="stat-card"><div class="stat-value" id="todayEarnings">0</div><div class="stat-label">Today's Earnings</div></div>
+            </div>
+            <div class="about-grid">
+                <div class="about-card"><div class="about-icon"><i class="fas fa-coins"></i></div><div class="about-title">Earn PEDO</div><div class="about-desc">Complete tasks & earn free Pedo Coin.</div></div>
+                <div class="about-card"><div class="about-icon"><i class="fas fa-calendar-day"></i></div><div class="about-title">Daily Rewards</div><div class="about-desc">New tasks every day.</div></div>
+                <div class="about-card"><div class="about-icon"><i class="fas fa-user-friends"></i></div><div class="about-title">Referral Bonus</div><div class="about-desc">Invite friends -> both get +100 PEDO!</div></div>
+                <div class="about-card"><div class="about-icon"><i class="fas fa-wallet"></i></div><div class="about-title">Easy Withdraw</div><div class="about-desc">Min 1,000 PEDO | Stable USD</div></div>
+                <div class="about-card"><div class="about-icon"><i class="fas fa-shield-alt"></i></div><div class="about-title">Secure & Safe</div><div class="about-desc">Verified platform with admin.</div></div>
+                <div class="about-card"><div class="about-icon"><i class="fas fa-headset"></i></div><div class="about-title">24/7 Support</div><div class="about-desc">Click headset icon anytime.</div></div>
+            </div>
+        </div>
+
+        <!-- EARN -->
+        <div id="earnSection" class="content-section">
+            <div class="section-header"><div class="back-button" id="earnBackBtn"><span>←</span> Back</div><div class="support-icon" id="supportIconEarn"><i class="fas fa-headset"></i></div></div>
+
+            <!-- Survey Task -->
+            <div id="surveyTaskCard">
+                <div class="task-card">
+                    <div class="task-header"><span class="task-title">Survey Task</span><span class="task-reward">+30 PEDO</span></div>
+                    <div class="task-desc">Answer 5 questions about the app, then watch a short ad to claim 30 PEDO. Daily limit: 10.</div>
+                    <div class="progress-container"><div class="progress-label"><span>Today</span><span id="surveyPercent">0%</span></div><div class="progress-bar-bg"><div class="progress-fill" id="surveyFill"></div></div><div class="completion-stats" id="surveyStats">0/10</div></div>
+                    <button id="startSurveyBtn" class="task-btn">Start Survey & Earn 30 PEDO</button>
+                </div>
+            </div>
+
+            <!-- Ads 1-4 (watch ads with real SDKs) -->
+            <div id="adsTaskContainer1">
+                <div class="task-card">
+                    <div class="task-header"><span class="task-title">See Ads 1 (Monetag)</span><span class="task-reward">+7 PEDO</span></div>
+                    <div class="task-desc">Watch a Monetag ad to earn 7 PEDO. Daily limit: 15.</div>
+                    <div class="progress-container"><div class="progress-label"><span>Today</span><span id="ads1Percent">0%</span></div><div class="progress-bar-bg"><div class="progress-fill" id="ads1Fill"></div></div><div class="completion-stats" id="ads1Stats">0/15</div></div>
+                    <button id="ads1Btn" class="task-btn">Watch Ad & Earn 7 PEDO</button>
+                </div>
+            </div>
+            <div id="adsTaskContainer2">
+                <div class="task-card">
+                    <div class="task-header"><span class="task-title">See Ads 2 (Giga Pub)</span><span class="task-reward">+7 PEDO</span></div>
+                    <div class="task-desc">Watch a Giga Pub ad to earn 7 PEDO. Daily limit: 15.</div>
+                    <div class="progress-container"><div class="progress-label"><span>Today</span><span id="ads2Percent">0%</span></div><div class="progress-bar-bg"><div class="progress-fill" id="ads2Fill"></div></div><div class="completion-stats" id="ads2Stats">0/15</div></div>
+                    <button id="ads2Btn" class="task-btn">Watch Ad & Earn 7 PEDO</button>
+                </div>
+            </div>
+            <div id="adsTaskContainer3">
+                <div class="task-card">
+                    <div class="task-header"><span class="task-title">See Ads 3 (Adsgram)</span><span class="task-reward">+7 PEDO</span></div>
+                    <div class="task-desc">Watch an Adsgram ad to earn 7 PEDO. Daily limit: 15.</div>
+                    <div class="progress-container"><div class="progress-label"><span>Today</span><span id="ads3Percent">0%</span></div><div class="progress-bar-bg"><div class="progress-fill" id="ads3Fill"></div></div><div class="completion-stats" id="ads3Stats">0/15</div></div>
+                    <button id="ads3Btn" class="task-btn">Watch Ad & Earn 7 PEDO</button>
+                </div>
+            </div>
+            <div id="adsTaskContainer4">
+                <div class="task-card">
+                    <div class="task-header"><span class="task-title">See Ads 4 (Adexora)</span><span class="task-reward">+7 PEDO</span></div>
+                    <div class="task-desc">Watch an Adexora ad to earn 7 PEDO. Daily limit: 15.</div>
+                    <div class="progress-container"><div class="progress-label"><span>Today</span><span id="ads4Percent">0%</span></div><div class="progress-bar-bg"><div class="progress-fill" id="ads4Fill"></div></div><div class="completion-stats" id="ads4Stats">0/15</div></div>
+                    <button id="ads4Btn" class="task-btn">Watch Ad & Earn 7 PEDO</button>
+                </div>
+            </div>
+
+            <!-- Ads 5-10 (link ads, reward 5, limit 15) -->
+            <div id="adsTaskContainer5">
+                <div class="task-card">
+                    <div class="task-header"><span class="task-title">See Ads 5</span><span class="task-reward">+5 PEDO</span></div>
+                    <div class="task-desc">Open link, stay 10s, then claim 5 PEDO. Daily limit: 15.</div>
+                    <div class="progress-container"><div class="progress-label"><span>Today</span><span id="ads5Percent">0%</span></div><div class="progress-bar-bg"><div class="progress-fill" id="ads5Fill"></div></div><div class="completion-stats" id="ads5Stats">0/15</div></div>
+                    <button id="ads5Btn" class="task-btn">Watch Ad & Earn 5 PEDO</button>
+                    <div id="ads5Timer" class="timer-text"></div>
+                </div>
+            </div>
+            <div id="adsTaskContainer6">
+                <div class="task-card">
+                    <div class="task-header"><span class="task-title">See Ads 6</span><span class="task-reward">+5 PEDO</span></div>
+                    <div class="task-desc">Open link, stay 10s, then claim 5 PEDO. Daily limit: 15.</div>
+                    <div class="progress-container"><div class="progress-label"><span>Today</span><span id="ads6Percent">0%</span></div><div class="progress-bar-bg"><div class="progress-fill" id="ads6Fill"></div></div><div class="completion-stats" id="ads6Stats">0/15</div></div>
+                    <button id="ads6Btn" class="task-btn">Watch Ad & Earn 5 PEDO</button>
+                    <div id="ads6Timer" class="timer-text"></div>
+                </div>
+            </div>
+            <div id="adsTaskContainer7">
+                <div class="task-card">
+                    <div class="task-header"><span class="task-title">See Ads 7</span><span class="task-reward">+5 PEDO</span></div>
+                    <div class="task-desc">Open link, stay 10s, then claim 5 PEDO. Daily limit: 15.</div>
+                    <div class="progress-container"><div class="progress-label"><span>Today</span><span id="ads7Percent">0%</span></div><div class="progress-bar-bg"><div class="progress-fill" id="ads7Fill"></div></div><div class="completion-stats" id="ads7Stats">0/15</div></div>
+                    <button id="ads7Btn" class="task-btn">Watch Ad & Earn 5 PEDO</button>
+                    <div id="ads7Timer" class="timer-text"></div>
+                </div>
+            </div>
+            <div id="adsTaskContainer8">
+                <div class="task-card">
+                    <div class="task-header"><span class="task-title">See Ads 8</span><span class="task-reward">+5 PEDO</span></div>
+                    <div class="task-desc">Open link, stay 10s, then claim 5 PEDO. Daily limit: 15.</div>
+                    <div class="progress-container"><div class="progress-label"><span>Today</span><span id="ads8Percent">0%</span></div><div class="progress-bar-bg"><div class="progress-fill" id="ads8Fill"></div></div><div class="completion-stats" id="ads8Stats">0/15</div></div>
+                    <button id="ads8Btn" class="task-btn">Watch Ad & Earn 5 PEDO</button>
+                    <div id="ads8Timer" class="timer-text"></div>
+                </div>
+            </div>
+            <div id="adsTaskContainer9">
+                <div class="task-card">
+                    <div class="task-header"><span class="task-title">See Ads 9</span><span class="task-reward">+5 PEDO</span></div>
+                    <div class="task-desc">Open link, stay 10s, then claim 5 PEDO. Daily limit: 15.</div>
+                    <div class="progress-container"><div class="progress-label"><span>Today</span><span id="ads9Percent">0%</span></div><div class="progress-bar-bg"><div class="progress-fill" id="ads9Fill"></div></div><div class="completion-stats" id="ads9Stats">0/15</div></div>
+                    <button id="ads9Btn" class="task-btn">Watch Ad & Earn 5 PEDO</button>
+                    <div id="ads9Timer" class="timer-text"></div>
+                </div>
+            </div>
+            <div id="adsTaskContainer10">
+                <div class="task-card">
+                    <div class="task-header"><span class="task-title">See Ads 10</span><span class="task-reward">+5 PEDO</span></div>
+                    <div class="task-desc">Open link, stay 10s, then claim 5 PEDO. Daily limit: 15.</div>
+                    <div class="progress-container"><div class="progress-label"><span>Today</span><span id="ads10Percent">0%</span></div><div class="progress-bar-bg"><div class="progress-fill" id="ads10Fill"></div></div><div class="completion-stats" id="ads10Stats">0/15</div></div>
+                    <button id="ads10Btn" class="task-btn">Watch Ad & Earn 5 PEDO</button>
+                    <div id="ads10Timer" class="timer-text"></div>
+                </div>
+            </div>
+
+            <div class="stats-box"><div class="stats-box-title">Today's Ads Watched</div><div class="stats-box-value" id="totalAdsCount">0</div></div>
+            <div class="stats-box"><div class="stats-box-title">PEDO Earned Today from Ads</div><div class="stats-box-value" id="totalAdsEarned">0</div></div>
+        </div>
+
+        <!-- EARNING -->
+        <div id="earningSection" class="content-section">
+            <div class="section-header"><div class="back-button" id="earningBackBtn"><span>←</span> Back</div><div class="support-icon" id="supportIconEarning"><i class="fas fa-headset"></i></div></div>
+
+            <div class="campaign-card" id="campaignCard">
+                <i class="fas fa-bullhorn"></i>
+                <h3>Task / Campaign</h3>
+                <p>If you want to add tasks or launch campaigns on Pedo Earn, please contact our business team.</p>
+                <button class="task-btn" style="background:#3b82f6; margin-top:12px;" id="contactBusinessBtn">Connect with Business Team</button>
+            </div>
+
+            <div id="pedoSubscribeTaskContainer">
+                <div class="task-card one-time-task">
+                    <div class="task-header"><span class="task-title">Subscribe Pedo Official</span><span class="task-reward">+25 PEDO</span></div>
+                    <div class="task-desc">Subscribe to our official YouTube channel and get 25 PEDO one-time.</div>
+                    <button id="openPedoYoutubeBtn" class="task-btn" style="background:#f59e0b;">Open Channel</button>
+                    <button id="verifyPedoYoutubeBtn" class="task-btn" style="background:#10b981; margin-top:8px;" disabled>Verify & Claim</button>
+                </div>
+            </div>
+
+            <div id="pedoTgTaskContainer">
+                <div class="task-card one-time-task">
+                    <div class="task-header"><span class="task-title">Join Pedo Official TG</span><span class="task-reward">+25 PEDO</span></div>
+                    <div class="task-desc">Join our official Telegram channel and get 25 PEDO one-time.</div>
+                    <button id="openPedoChannelBtn" class="task-btn" style="background:#f59e0b;">Join Channel</button>
+                    <button id="verifyPedoChannelBtn" class="task-btn" style="background:#10b981; margin-top:8px;" disabled>Verify & Claim</button>
+                </div>
+            </div>
+
+            <div id="paymentProofTaskContainer">
+                <div class="task-card one-time-task">
+                    <div class="task-header"><span class="task-title">Join Payment Proof Channel</span><span class="task-reward">+25 PEDO</span></div>
+                    <div class="task-desc">Join our payment proof channel to see real withdrawals and earn 25 PEDO.</div>
+                    <button id="openPaymentProofBtn" class="task-btn" style="background:#f59e0b;">Join Channel</button>
+                    <button id="verifyPaymentProofBtn" class="task-btn" style="background:#10b981; margin-top:8px;" disabled>Verify & Claim</button>
+                </div>
+            </div>
+
+            <div id="specialTaskContainer1">
+                <div class="task-card">
+                    <div class="task-header"><span class="task-title">Special 3-Step Task (CPM)</span><span class="task-reward">+800 PEDO (admin)</span><button class="howto-btn" id="howtoSpecial1Btn"><i class="fab fa-youtube"></i> How to do</button></div>
+                    <div class="task-desc">Complete steps, screen record, send to admin with your Telegram username. Cooldown 2 days.</div>
+                    <div style="margin:15px 0;"><strong>Step 1:</strong> Open the website</div>
+                    <button id="openCpmLinkBtn" class="task-btn" style="background:#3b82f6;">Open CPM Website</button>
+                    <div style="margin:15px 0;"><strong>Step 2 & 3:</strong> Install app, create account, screen record</div>
+                    <div><strong>Submit:</strong> Send recording to admin via Telegram</div>
+                    <div style="display:flex; gap:10px; margin:10px 0;"><button id="contactAdminBtn" class="task-btn" style="background:#1e293b;">Contact Admin</button></div>
+                    <div><strong>Your Telegram Username:</strong></div>
+                    <input type="text" id="cpmUsernameInput" class="form-input" placeholder="@username" value="@">
+                    <button id="submitCpmTaskBtn" class="task-btn" style="background:#8b5cf6;">Submit Task</button>
+                    <div id="cpmCooldown" class="cooldown-text"></div>
+                </div>
+            </div>
+
+            <div id="specialTaskContainer2">
+                <div class="task-card">
+                    <div class="task-header"><span class="task-title">Special 3-Step Task (CPM2)</span><span class="task-reward">+800 PEDO (admin)</span><button class="howto-btn" id="howtoSpecial2Btn"><i class="fab fa-youtube"></i> How to do</button></div>
+                    <div class="task-desc">Complete steps via new platform, screen record, send to admin with Telegram username. Cooldown 2 days.</div>
+                    <div style="margin:15px 0;"><strong>Step 1:</strong> Open CPM2 website</div>
+                    <button id="openCpm2LinkBtn" class="task-btn" style="background:#3b82f6;">Open CPM2 Website</button>
+                    <div><strong>Submit:</strong> Send recording to admin</div>
+                    <div style="display:flex; gap:10px; margin:10px 0;"><button id="contactAdminCpm2Btn" class="task-btn" style="background:#1e293b;">Contact Admin</button></div>
+                    <div><strong>Your Telegram Username:</strong></div>
+                    <input type="text" id="cpm2UsernameInput" class="form-input" placeholder="@username" value="@">
+                    <button id="submitCpm2TaskBtn" class="task-btn" style="background:#8b5cf6;">Submit CPM2 Task</button>
+                    <div id="cpm2Cooldown" class="cooldown-text"></div>
+                </div>
+            </div>
+
+            <div class="earn-history-box"><h4 style="font-weight:700;margin-bottom:12px;">Pending History (Special Tasks)</h4><div id="pendingHistoryList"></div></div>
+            <div id="adminTrigger" style="text-align:center; margin-top:20px; cursor:pointer; opacity:0.4; font-size:12px;">Admin</div>
+        </div>
+
+        <!-- CASEOUT -->
+        <div id="cashoutSection" class="content-section">
+            <div class="section-header"><div class="back-button" id="cashoutBackBtn"><span>←</span> Back</div><div class="support-icon" id="supportIconCashout"><i class="fas fa-headset"></i></div></div>
+            <div class="balance-card">
+                <div style="font-weight:500;color:#475569;">Available Balance</div>
+                <div class="balance-amount" id="withdrawBalance">0</div>
+                <div class="usd-equivalent" id="usdBalanceCashout">~ $0.000 USD</div>
+            </div>
+            <div class="withdraw-requirements-box">
+                <div class="requirement-header"><i class="fas fa-clipboard-list"></i> <span>Withdrawal Requirements</span></div>
+                <div class="requirement-item" id="reqItemBal"><div class="req-icon"><i class="fas fa-coins"></i></div><div class="req-details"><div class="req-title">Minimum Balance</div><div class="req-value">1,000 PEDO needed</div></div><div class="req-status" id="reqStatusBal">○</div></div>
+                <div class="requirement-item" id="reqItemRef"><div class="req-icon"><i class="fas fa-user-friends"></i></div><div class="req-details"><div class="req-title">Referrals Required</div><div class="req-value">At least 3 active referrals</div></div><div class="req-status" id="reqStatusRef">○</div></div>
+            </div>
+            <div style="background:#f8fafc; border-radius:32px; padding:22px;">
+                <h4 style="margin-bottom:12px;font-weight:700;">Select Payment Method</h4>
+                <div id="paymentMethodBinance" class="payment-option selected"><i class="fab fa-bitcoin"></i> Binance</div>
+                <div id="paymentMethodBkash" class="payment-option"><i class="fas fa-mobile-alt"></i> bKash</div>
+                <div id="paymentMethodNagad" class="payment-option"><i class="fas fa-mobile-alt"></i> Nagad</div>
+            </div>
+            <input type="text" id="paymentAccount" class="form-input" placeholder="Binance Email/UID">
+            <input type="number" id="withdrawAmount" step="500" min="1000" class="form-input" placeholder="Amount (PEDO) - Min 1,000">
+            <div style="background:#fff; border-radius:32px; padding:20px; border:1px solid #eef2f6;">
+                <div class="fee-breakdown"><span>Amount</span><span id="wdAmount">0 PEDO</span></div>
+                <div class="fee-breakdown"><span>Fee (10%)</span><span id="wdFee">0 PEDO</span></div>
+                <div class="fee-breakdown" style="border-bottom:none; font-weight:600;"><span>You Receive</span><span id="wdNet">0 PEDO</span></div>
+                <div class="fee-breakdown" style="border-bottom:none;"><span>~ USD Value</span><span id="wdUsdValue">$0.000</span></div>
+            </div>
+            <button id="submitWithdrawBtn" class="withdraw-btn">Request Withdrawal</button>
+            <div style="margin-top:35px;"><h4 style="font-weight:700;margin-bottom:12px;">Withdrawal History</h4><div id="historyList"></div></div>
+        </div>
+
+        <!-- REFERRAL -->
+        <div id="referralSection" class="content-section">
+            <div class="section-header"><div class="back-button" id="referralBackBtn"><span>←</span> Back</div><div class="support-icon" id="supportIconReferral"><i class="fas fa-headset"></i></div></div>
+            <div class="referral-professional"><i class="fas fa-user-friends" style="font-size:2.5rem;"></i><h3 style="margin:12px 0;">Invite Friends</h3><p style="color:#475569;">Share your code -> each friend gets 100 PEDO, you earn 100 PEDO too!</p>
+                <div class="referral-code-display" id="referralCodeDisplay"></div>
+                <div class="btn-group"><button class="btn-primary" id="copyReferralCodeBtn">Copy Code</button><button class="btn-primary" id="shareTelegramCodeBtn">Share</button></div>
+            </div>
+            <div style="margin-top:24px;"><h4 style="font-weight:700;margin-bottom:12px;">Your Referrals</h4><div id="referralsList"></div><div style="margin-top:20px; background:#f8fafc; border-radius:28px; padding:18px;"><strong>Referral Bonus Earned:</strong> <span id="referralBonusTotal">0</span> PEDO</div></div>
+        </div>
+
+        <!-- BOTTOM NAV -->
+        <div class="bottom-nav">
+            <button class="nav-btn active" id="navHome"><i class="fas fa-home"></i><span>Home</span></button>
+            <button class="nav-btn" id="navEarn"><i class="fas fa-ad"></i><span>Earn</span></button>
+            <button class="nav-btn" id="navEarning"><i class="fas fa-tasks"></i><span>Earning</span></button>
+            <button class="nav-btn" id="navCashout"><i class="fas fa-wallet"></i><span>Cashout</span></button>
+            <button class="nav-btn" id="navReferral"><i class="fas fa-user-friends"></i><span>Referral</span></button>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+    <div id="referralCodeModal" class="referral-code-modal"><div class="referral-code-card"><i class="fas fa-gift" style="font-size:2.5rem;"></i><h2 style="margin:12px 0;">Welcome to Pedo Earn</h2><p style="color:#475569;">Enter referral code to get 100 PEDO bonus.</p><input type="text" id="referralCodeInput" class="form-input" placeholder="Referral code"><button id="submitReferralCodeBtn" class="claim-btn">Claim</button><button id="skipReferralCodeBtn" class="claim-btn skip-btn">Skip</button></div></div>
+    <div id="withdrawSuccessModal" class="modal"><div class="modal-content"><i class="fas fa-check-circle" style="font-size:2rem; color:#22c55e;"></i><h3 style="margin:12px 0;">Withdrawal Requested</h3><div id="withdrawSuccessDetails"></div><button id="closeSuccessModal" class="claim-btn">OK</button></div></div>
+    <div id="adminModal" class="modal"><div class="modal-content" style="max-width:450px;"><h3 style="margin-bottom:16px;">Admin Panel</h3><div id="adminSubmissionsList" style="max-height:400px; overflow-y:auto;"></div><button id="closeAdminModal" class="claim-btn skip-btn">Close</button></div></div>
+    <div id="claimModal" class="claim-modal"><div class="claim-card"><i class="fas fa-trophy" style="font-size:2.5rem; color:#f59e0b;"></i><h2 id="claimModalTitle" style="margin:12px 0;">Congratulations!</h2><p id="claimModalMessage" style="color:#475569;">You completed the task. Click Claim to get your reward.</p><button id="confirmClaimBtn" class="claim-btn">Claim Reward</button><button id="cancelClaimBtn" class="claim-btn skip-btn">Cancel</button></div></div>
+    <div id="surveyModal" class="survey-modal"><div class="survey-card" id="surveyInner"></div></div>
+
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyAmTdb5ejQtgYxmkfLc575HcBN8pMhrBPM",
+            authDomain: "earn-for-earn-55d3e.firebaseapp.com",
+            databaseURL: "https://earn-for-earn-55d3e-default-rtdb.firebaseio.com",
+            projectId: "earn-for-earn-55d3e",
+            storageBucket: "earn-for-earn-55d3e.firebasestorage.app",
+            messagingSenderId: "109416949734",
+            appId: "1:109416949734:web:53f52de7899d65a04c9827"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        let webApp = window.Telegram?.WebApp;
+        if (webApp) webApp.expand();
+        let tgUser = webApp?.initDataUnsafe?.user;
+        let telegramId = tgUser?.id ? tgUser.id.toString() : null;
+        let telegramUsername = tgUser?.username || tgUser?.first_name || (telegramId ? "user_" + telegramId : "guest_" + Date.now());
+        if (!telegramId) { telegramId = "guest_" + Date.now();
+            telegramUsername = "guest_" + Date.now(); }
+        let userData = null;
+        const EXCHANGE_RATE = 10000;
+
+        // Ad links for ads 5-10
+        const AD_LINKS = [
+            'https://bowlsharp.com/vsnyfstz?key=2645a1a9a50c52b7bd8183f83edc2fd5',
+            'https://wwp.giriubin.com/redirect-zone/31c41a18',
+            'https://omg10.com/4/10686606',
+            'https://data527.click/05e607303a719ee84c36/de2ff98fb3/?placementName=default',
+            'https://link.gigapub.tech/l/9jfxp27o6m',
+            'https://ustashewasputtin.com?hTTVD=1246757'
+        ];
+
+        // Survey links (5 links for each question step)
+        const SURVEY_LINKS = [
+            'https://bowlsharp.com/vsnyfstz?key=2645a1a9a50c52b7bd8183f83edc2fd5',
+            'https://wwp.giriubin.com/redirect-zone/31c41a18',
+            'https://omg10.com/4/10686606',
+            'https://data527.click/05e607303a719ee84c36/de2ff98fb3/?placementName=default',
+            'https://link.gigapub.tech/l/9jfxp27o6m'
+        ];
+
+        const SURVEY_QUESTIONS = [{
+            text: "What is the main purpose of Pedo Earn?",
+            options: ["Earn free PEDO coins", "Play games", "Trade crypto", "Watch movies"]
+        }, {
+            text: "How many referrals are needed for withdrawal?",
+            options: ["1", "2", "3", "5"]
+        }, {
+            text: "What is the minimum withdrawal amount?",
+            options: ["500 PEDO", "1000 PEDO", "2000 PEDO", "5000 PEDO"]
+        }, {
+            text: "Which of these is a way to earn on Pedo Earn?",
+            options: ["Watching ads", "Completing surveys", "Referring friends", "All of the above"]
+        }, {
+            text: "What is the daily limit for each ad task?",
+            options: ["5", "10", "15", "20"]
+        }];
+
+        let pendingClaim = null;
+
+        function showClaimModal(taskName, reward, claimCallback) {
+            document.getElementById('claimModalTitle').innerHTML = 'Congratulations!';
+            document.getElementById('claimModalMessage').innerHTML = 'You completed <strong>' + taskName +
+                '</strong>. Click Claim to get <strong>' + reward + ' PEDO</strong>.';
+            pendingClaim = claimCallback;
+            document.getElementById('claimModal').classList.add('active');
+        }
+
+        document.getElementById('confirmClaimBtn').onclick = function() {
+            if (pendingClaim) {
+                pendingClaim();
+                pendingClaim = null;
+            }
+            document.getElementById('claimModal').classList.remove('active');
+        };
+        document.getElementById('cancelClaimBtn').onclick = function() {
+            pendingClaim = null;
+            document.getElementById('claimModal').classList.remove('active');
+            alert('You cancelled the claim. No reward given.');
+        };
+
+        async function updateUser(updates) { if (!telegramId) return; await db.ref(`users/${telegramId}`).update(updates); if (
+                userData) Object.assign(userData, updates);
+            refreshUI(); }
+
+        async function fetchUserData() { return (await db.ref(`users/${telegramId}`).once('value')).val(); }
+
+        function showToast(amount, task) {
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification';
+            toast.innerHTML = '<i class="fas fa-gift"></i> +' + amount + ' PEDO from ' + task;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2800);
+        }
+
+        async function addEarningEntry(amount, description) {
+            if (!userData) return;
+            const historyArr = Array.isArray(userData.earningsHistory) ? userData.earningsHistory : [];
+            const newEntry = { id: Date.now(), amount, description, date: Date.now() };
+            const updatedHistory = [newEntry, ...historyArr].slice(0, 200);
+            await updateUser({ earningsHistory: updatedHistory });
+        }
+
+        function getTodayEarnings() {
+            if (!userData || !Array.isArray(userData.earningsHistory)) return 0;
+            const today = new Date().toDateString();
+            let total = 0;
+            userData.earningsHistory.forEach(entry => {
+                if (entry.date && new Date(entry.date).toDateString() === today) {
+                    total += (entry.amount || 0);
+                }
+            });
+            return total;
+        }
+
+        function refreshUI() {
+            if (!userData) return;
+            let bal = userData.balance || 0;
+            document.getElementById('balanceAmount').innerText = bal.toFixed(0);
+            document.getElementById('usdBalanceHome').innerHTML = '~ $' + (bal / EXCHANGE_RATE).toFixed(3) + ' USD';
+            document.getElementById('withdrawBalance').innerText = bal.toFixed(0);
+            document.getElementById('usdBalanceCashout').innerHTML = '~ $' + (bal / EXCHANGE_RATE).toFixed(3) + ' USD';
+            document.getElementById('tasksCompletedCount').innerText = userData.tasksCompleted || 0;
+            document.getElementById('refCount').innerText = userData.referrals?.length || 0;
+            document.getElementById('todayEarnings').innerText = getTodayEarnings().toFixed(0);
+            document.getElementById('referralBonusTotal').innerText = (userData.referralBonusEarned || 0).toFixed(0);
+            document.getElementById('referralCodeDisplay').innerText = userData.referralCode || '';
+            let refs = userData.referrals || [];
+            document.getElementById('referralsList').innerHTML = refs.length ? refs.map(r =>
+                '<div class="friend-card"><span>' + r.username + '</span><span>+' + r.bonus + ' PEDO</span></div>'
+            ).join('') : '<div class="small-text">No referrals</div>';
+            let hist = userData.withdrawalHistory || [];
+            document.getElementById('historyList').innerHTML = hist.length ? hist.slice().reverse().map(w =>
+                '<div class="withdrawal-history-card"><div><strong>' + w.withdrawId + '</strong> <span>' + w.status +
+                '</span></div><div>' + w.amount + ' PEDO (~$' + ((w.netAmount || w.amount) / EXCHANGE_RATE).toFixed(3) +
+                ')</div><div>' + w.method + '</div><small>' + new Date(w.date).toLocaleString() + '</small></div>'
+            ).join('') : '<div style="color:#64748b;">No withdrawals</div>';
+            let reqBal = bal >= 1000,
+                reqRef = (userData.referrals?.length || 0) >= 3;
+            document.getElementById('reqStatusBal').innerHTML = reqBal ? '<i class="fas fa-check-circle"></i>' :
+                '<i class="fas fa-times-circle"></i>';
+            document.getElementById('reqStatusRef').innerHTML = reqRef ? '<i class="fas fa-check-circle"></i>' :
+                '<i class="fas fa-times-circle"></i>';
+            document.getElementById('reqStatusBal').className = 'req-status ' + (reqBal ? 'status-success' :
+            'status-failed');
+            document.getElementById('reqStatusRef').className = 'req-status ' + (reqRef ? 'status-success' :
+            'status-failed');
+            document.getElementById('submitWithdrawBtn').disabled = !(reqBal && reqRef);
+            let amt = parseInt(document.getElementById('withdrawAmount')?.value) || 0;
+            let fee = Math.floor(amt * 0.1);
+            document.getElementById('wdAmount').innerText = amt + ' PEDO';
+            document.getElementById('wdFee').innerText = fee + ' PEDO';
+            document.getElementById('wdNet').innerText = (amt - fee) + ' PEDO';
+            document.getElementById('wdUsdValue').innerText = '$' + ((amt - fee) / EXCHANGE_RATE).toFixed(3);
+
+            // Progress for all ads (limit 15)
+            for (let i = 1; i <= 10; i++) {
+                let prog = userData['ads' + i + 'Progress'] || 0;
+                let fill = document.getElementById('ads' + i + 'Fill');
+                if (fill) fill.style.width = (prog / 15) * 100 + '%';
+                let perc = document.getElementById('ads' + i + 'Percent');
+                if (perc) perc.innerText = Math.floor((prog / 15) * 100) + '%';
+                let stats = document.getElementById('ads' + i + 'Stats');
+                if (stats) stats.innerText = prog + '/15';
+                let btn = document.getElementById('ads' + i + 'Btn');
+                if (btn) {
+                    if (prog >= 15) {
+                        btn.disabled = true;
+                        btn.innerHTML = 'Completed Today';
+                        btn.classList.add('completed');
+                    } else {
+                        btn.disabled = false;
+                    }
+                }
+                let timerDiv = document.getElementById('ads' + i + 'Timer');
+                if (timerDiv && prog >= 15) timerDiv.innerText = '';
+            }
+
+            // Survey progress (limit 10)
+            let surveyProg = userData.surveyProgress || 0;
+            let sFill = document.getElementById('surveyFill');
+            if (sFill) sFill.style.width = (surveyProg / 10) * 100 + '%';
+            let sPerc = document.getElementById('surveyPercent');
+            if (sPerc) sPerc.innerText = Math.floor((surveyProg / 10) * 100) + '%';
+            let sStats = document.getElementById('surveyStats');
+            if (sStats) sStats.innerText = surveyProg + '/10';
+            let sBtn = document.getElementById('startSurveyBtn');
+            if (sBtn) {
+                if (surveyProg >= 10) {
+                    sBtn.disabled = true;
+                    sBtn.innerHTML = 'Completed Today';
+                    sBtn.classList.add('completed');
+                } else {
+                    sBtn.disabled = false;
+                }
+            }
+
+            let totalAds = 0,
+                earnedAds = 0;
+            for (let i = 1; i <= 10; i++) {
+                let p = userData['ads' + i + 'Progress'] || 0;
+                totalAds += p;
+                let reward = (i <= 4) ? 7 : 5;
+                earnedAds += p * reward;
+            }
+            document.getElementById('totalAdsCount').innerText = totalAds;
+            document.getElementById('totalAdsEarned').innerText = earnedAds;
+            renderPendingHistory();
+        }
+
+        // --- Ads 1-4: real SDK integrations ---
+
+        // Helper to grant reward after ad completion
+        async function grantAdReward(adKey, reward, taskName, btn) {
+            let newProg = (userData[adKey] || 0) + 1;
+            await updateUser({
+                [adKey]: newProg,
+                balance: (userData.balance || 0) + reward,
+                totalEarned: (userData.totalEarned || 0) + reward,
+                tasksCompleted: (userData.tasksCompleted || 0) + 1
+            });
+            await addEarningEntry(reward, taskName + ' (+' + reward + ' PEDO)');
+            showToast(reward, taskName);
+            refreshUI();
+            // Button will be updated via refreshUI
+        }
+
+        // Ad 1: Monetag (show_10541383)
+        document.getElementById('ads1Btn').onclick = async function() {
+            let prog = userData.ads1Progress || 0;
+            if (prog >= 15) { alert('Daily limit reached for this ad.'); return; }
+            let btn = this;
+            btn.disabled = true;
+            btn.innerHTML = 'Loading ad...';
+            try {
+                if (typeof show_10541383 !== 'function') throw new Error('Monetag SDK not loaded');
+                await show_10541383();
+                // Ad completed successfully
+                await grantAdReward('ads1Progress', 7, 'See Ads 1 (Monetag)', btn);
+                btn.disabled = false;
+                btn.innerHTML = 'Watch Ad & Earn 7 PEDO';
+            } catch (e) {
+                console.error(e);
+                alert('Ad failed: ' + e.message);
+                btn.disabled = false;
+                btn.innerHTML = 'Watch Ad & Earn 7 PEDO';
+            }
+        };
+
+        // Ad 2: Giga Pub (window.showGiga)
+        document.getElementById('ads2Btn').onclick = async function() {
+            let prog = userData.ads2Progress || 0;
+            if (prog >= 15) { alert('Daily limit reached for this ad.'); return; }
+            let btn = this;
+            btn.disabled = true;
+            btn.innerHTML = 'Loading ad...';
+            try {
+                if (typeof window.showGiga !== 'function') throw new Error('Giga Pub SDK not loaded');
+                await window.showGiga();
+                await grantAdReward('ads2Progress', 7, 'See Ads 2 (Giga Pub)', btn);
+                btn.disabled = false;
+                btn.innerHTML = 'Watch Ad & Earn 7 PEDO';
+            } catch (e) {
+                console.error(e);
+                alert('Ad failed: ' + e.message);
+                btn.disabled = false;
+                btn.innerHTML = 'Watch Ad & Earn 7 PEDO';
+            }
+        };
+
+        // Ad 3: Adsgram (blockId: "int-28543")
+        document.getElementById('ads3Btn').onclick = async function() {
+            let prog = userData.ads3Progress || 0;
+            if (prog >= 15) { alert('Daily limit reached for this ad.'); return; }
+            let btn = this;
+            btn.disabled = true;
+            btn.innerHTML = 'Loading ad...';
+            try {
+                if (typeof window.Adsgram === 'undefined') throw new Error('Adsgram SDK not loaded');
+                const controller = window.Adsgram.init({ blockId: "int-28543" });
+                const result = await controller.show();
+                if (result && result.done) {
+                    await grantAdReward('ads3Progress', 7, 'See Ads 3 (Adsgram)', btn);
+                    btn.disabled = false;
+                    btn.innerHTML = 'Watch Ad & Earn 7 PEDO';
+                } else {
+                    alert('Ad was not completed fully.');
+                    btn.disabled = false;
+                    btn.innerHTML = 'Watch Ad & Earn 7 PEDO';
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Ad failed: ' + e.message);
+                btn.disabled = false;
+                btn.innerHTML = 'Watch Ad & Earn 7 PEDO';
+            }
+        };
+
+        // Ad 4: Adexora (window.showAdexora)
+        document.getElementById('ads4Btn').onclick = async function() {
+            let prog = userData.ads4Progress || 0;
+            if (prog >= 15) { alert('Daily limit reached for this ad.'); return; }
+            let btn = this;
+            btn.disabled = true;
+            btn.innerHTML = 'Loading ad...';
+            try {
+                if (typeof window.showAdexora !== 'function') throw new Error('Adexora SDK not loaded');
+                await window.showAdexora();
+                await grantAdReward('ads4Progress', 7, 'See Ads 4 (Adexora)', btn);
+                btn.disabled = false;
+                btn.innerHTML = 'Watch Ad & Earn 7 PEDO';
+            } catch (e) {
+                console.error(e);
+                alert('Ad failed: ' + e.message);
+                btn.disabled = false;
+                btn.innerHTML = 'Watch Ad & Earn 7 PEDO';
+            }
+        };
+
+        // --- Ads 5-10: link + timer + modal (unchanged) ---
+        function startAdTimerWithModal(adIndex, btnId) {
+            const adKey = 'ads' + adIndex + 'Progress';
+            const btn = document.getElementById(btnId);
+            const timerDiv = document.getElementById('ads' + adIndex + 'Timer');
+
+            if (userData[adKey] >= 15) {
+                alert('Daily limit reached for this ad.');
+                return;
+            }
+            if (btn.dataset.timerActive === 'true') {
+                alert('Please wait for the current ad to finish.');
+                return;
+            }
+
+            const reward = 5;
+            const link = AD_LINKS[adIndex - 5];
+
+            window.open(link, '_blank');
+
+            let timeLeft = 10;
+            btn.disabled = true;
+            btn.innerHTML = 'Stay on link for ' + timeLeft + 's...';
+            btn.classList.add('timer-active');
+            timerDiv.innerText = 'Wait ' + timeLeft + ' seconds...';
+            btn.dataset.timerActive = 'true';
+
+            const interval = setInterval(() => {
+                timeLeft--;
+                if (timeLeft > 0) {
+                    btn.innerHTML = 'Stay on link for ' + timeLeft + 's...';
+                    timerDiv.innerText = 'Wait ' + timeLeft + ' seconds...';
+                } else {
+                    clearInterval(interval);
+                    btn.dataset.timerActive = 'false';
+                    timerDiv.innerText = 'Ready to claim!';
+                    btn.innerHTML = 'Claim now!';
+                    btn.classList.remove('timer-active');
+                    btn.classList.add('timer-active');
+                    const taskName = 'See Ads ' + adIndex;
+                    showClaimModal(taskName, reward, async function() {
+                        let newProg = (userData[adKey] || 0) + 1;
+                        await updateUser({
+                            [adKey]: newProg,
+                            balance: (userData.balance || 0) + reward,
+                            totalEarned: (userData.totalEarned || 0) + reward,
+                            tasksCompleted: (userData.tasksCompleted || 0) + 1
+                        });
+                        await addEarningEntry(reward, taskName + ' (+' + reward + ' PEDO)');
+                        showToast(reward, taskName);
+                        refreshUI();
+                    });
+                    const cancelHandler = function() {
+                        btn.disabled = false;
+                        btn.innerHTML = 'Watch Ad & Earn 5 PEDO';
+                        btn.classList.remove('timer-active');
+                        timerDiv.innerText = '';
+                        document.getElementById('cancelClaimBtn').removeEventListener('click', cancelHandler);
+                    };
+                    document.getElementById('cancelClaimBtn').addEventListener('click', cancelHandler);
+                    const confirmHandler = function() {
+                        document.getElementById('cancelClaimBtn').removeEventListener('click', cancelHandler);
+                    };
+                    document.getElementById('confirmClaimBtn').addEventListener('click', confirmHandler);
+                }
+            }, 1000);
+        }
+
+        // Attach ads 5-10
+        for (let i = 5; i <= 10; i++) {
+            const btnId = 'ads' + i + 'Btn';
+            document.getElementById(btnId).onclick = (function(idx) {
+                return function() {
+                    startAdTimerWithModal(idx, btnId);
+                };
+            })(i);
+        }
+
+        // --- Survey Task (updated: after final answers, show Monetag ad before reward) ---
+        let surveyActive = false;
+        let surveyStep = 0;
+        let selectedAnswers = [];
+
+        function renderSurveyModal() {
+            let html = '';
+            if (surveyStep < SURVEY_QUESTIONS.length) {
+                const q = SURVEY_QUESTIONS[surveyStep];
+                html += '<div class="survey-question-text">' + (surveyStep + 1) + '. ' + q.text + '</div>';
+                q.options.forEach(opt => {
+                    const sel = selectedAnswers[surveyStep] === opt ? 'selected' : '';
+                    html += '<div class="survey-option ' + sel + '" data-val="' + opt.replace(/"/g, '&quot;') +
+                        '">' + opt + '</div>';
+                });
+                html += '<div class="survey-nav-buttons">';
+                if (surveyStep > 0) html += '<button id="surveyPrevBtn" class="claim-btn skip-btn">Previous</button>';
+                html += '<button id="surveyNextBtn" class="claim-btn">' + (surveyStep === SURVEY_QUESTIONS.length - 1 ?
+                    'Finish & Watch Ad' : 'Next') + '</button>';
+                html += '<button id="surveyCloseBtn" class="claim-btn skip-btn">Cancel</button>';
+                html += '</div>';
+            } else {
+                // All questions answered: now show Monetag ad and then claim
+                html += '<div class="survey-question-text">Thank you for answering!</div>';
+                html += '<p style="margin:16px 0;color:#475569;">Please watch a short ad to claim your 30 PEDO reward.</p>';
+                html += '<button id="surveyWatchAdBtn" class="claim-btn">Watch Ad & Claim 30 PEDO</button>';
+                html += '<button id="surveyCloseBtn" class="claim-btn skip-btn">Cancel</button>';
+            }
+            document.getElementById('surveyInner').innerHTML = html;
+            attachSurveyEvents();
+        }
+
+        function attachSurveyEvents() {
+            document.querySelectorAll('.survey-option').forEach(el => {
+                el.onclick = function() {
+                    const val = this.getAttribute('data-val');
+                    selectedAnswers[surveyStep] = val;
+                    document.querySelectorAll('.survey-option').forEach(o => o.classList.remove('selected'));
+                    this.classList.add('selected');
+                };
+            });
+            document.getElementById('surveyPrevBtn')?.addEventListener('click', function() {
+                if (surveyStep > 0) {
+                    surveyStep--;
+                    renderSurveyModal();
+                }
+            });
+            document.getElementById('surveyNextBtn')?.addEventListener('click', function() {
+                if (!selectedAnswers[surveyStep]) {
+                    alert('Please select an answer.');
+                    return;
+                }
+                if (surveyStep === SURVEY_QUESTIONS.length - 1) {
+                    surveyStep++;
+                    renderSurveyModal();
+                } else {
+                    surveyStep++;
+                    renderSurveyModal();
+                    window.open(SURVEY_LINKS[surveyStep - 1], '_blank');
+                }
+            });
+            document.getElementById('surveyWatchAdBtn')?.addEventListener('click', async function() {
+                // Show Monetag ad before granting reward
+                try {
+                    if (typeof show_10541383 !== 'function') throw new Error('Monetag SDK not loaded');
+                    await show_10541383();
+                    // Ad completed, now grant reward
+                    let prog = userData.surveyProgress || 0;
+                    if (prog >= 10) { alert('Daily limit reached for survey.'); return; }
+                    const taskName = 'Survey';
+                    const reward = 30;
+                    // Use claim modal to confirm
+                    showClaimModal(taskName, reward, async function() {
+                        await updateUser({
+                            surveyProgress: prog + 1,
+                            balance: (userData.balance || 0) + reward,
+                            totalEarned: (userData.totalEarned || 0) + reward,
+                            tasksCompleted: (userData.tasksCompleted || 0) + 1
+                        });
+                        await addEarningEntry(reward, 'Survey (+' + reward + ' PEDO)');
+                        showToast(reward, 'Survey');
+                        document.getElementById('surveyModal').classList.remove('active');
+                        surveyActive = false;
+                        refreshUI();
+                    });
+                    // Close survey modal after claim? We'll let claim modal handle it.
+                    // But we need to close survey modal on cancel/confirm
+                    const cancelHandler = function() {
+                        document.getElementById('surveyModal').classList.remove('active');
+                        surveyActive = false;
+                        document.getElementById('cancelClaimBtn').removeEventListener('click', cancelHandler);
+                    };
+                    document.getElementById('cancelClaimBtn').addEventListener('click', cancelHandler);
+                    const confirmHandler = function() {
+                        document.getElementById('cancelClaimBtn').removeEventListener('click', cancelHandler);
+                    };
+                    document.getElementById('confirmClaimBtn').addEventListener('click', confirmHandler);
+                } catch (e) {
+                    console.error(e);
+                    alert('Ad failed: ' + e.message);
+                }
+            });
+            document.getElementById('surveyCloseBtn')?.addEventListener('click', function() {
+                document.getElementById('surveyModal').classList.remove('active');
+                surveyActive = false;
+            });
+        }
+
+        document.getElementById('startSurveyBtn').onclick = function() {
+            if ((userData.surveyProgress || 0) >= 10) {
+                alert('Daily survey limit reached.');
+                return;
+            }
+            if (surveyActive) return;
+            surveyActive = true;
+            surveyStep = 0;
+            selectedAnswers = [];
+            renderSurveyModal();
+            document.getElementById('surveyModal').classList.add('active');
+        };
+
+        // --- One-time tasks (unchanged) ---
+        let pedoYoutubeOpened = false,
+            pedoChannelOpened = false,
+            paymentProofOpened = false;
+
+        document.getElementById('openPedoYoutubeBtn').onclick = () => {
+            window.open('https://youtube.com/@pedoofficial', '_blank');
+            pedoYoutubeOpened = true;
+            document.getElementById('verifyPedoYoutubeBtn').disabled = false;
+        };
+        document.getElementById('verifyPedoYoutubeBtn').onclick = function() {
+            if (!pedoYoutubeOpened || userData.pedoYoutubeClaimed) return;
+            const taskName = 'Subscribe Pedo Official';
+            const reward = 25;
+            showClaimModal(taskName, reward, async function() {
+                await updateUser({ pedoYoutubeClaimed: true, balance: (userData.balance || 0) + reward,
+                    totalEarned: (userData.totalEarned || 0) + reward, tasksCompleted: (userData
+                        .tasksCompleted || 0) + 1 });
+                await addEarningEntry(reward, taskName);
+                showToast(reward, taskName);
+                document.getElementById('pedoSubscribeTaskContainer')?.remove();
+                refreshUI();
+            });
+        };
+
+        document.getElementById('openPedoChannelBtn').onclick = () => {
+            window.open('https://t.me/pedoanouncementchanel', '_blank');
+            pedoChannelOpened = true;
+            document.getElementById('verifyPedoChannelBtn').disabled = false;
+        };
+        document.getElementById('verifyPedoChannelBtn').onclick = function() {
+            if (!pedoChannelOpened || userData.pedoChannelClaimed) return;
+            const taskName = 'Join Pedo Official TG';
+            const reward = 25;
+            showClaimModal(taskName, reward, async function() {
+                await updateUser({ pedoChannelClaimed: true, balance: (userData.balance || 0) + reward,
+                    totalEarned: (userData.totalEarned || 0) + reward, tasksCompleted: (userData
+                        .tasksCompleted || 0) + 1 });
+                await addEarningEntry(reward, taskName);
+                showToast(reward, taskName);
+                document.getElementById('pedoTgTaskContainer')?.remove();
+                refreshUI();
+            });
+        };
+
+        document.getElementById('openPaymentProofBtn').onclick = () => {
+            window.open('https://t.me/pedopaymentproofofficial', '_blank');
+            paymentProofOpened = true;
+            document.getElementById('verifyPaymentProofBtn').disabled = false;
+        };
+        document.getElementById('verifyPaymentProofBtn').onclick = function() {
+            if (!paymentProofOpened || userData.paymentProofClaimed) return;
+            const taskName = 'Join Payment Proof Channel';
+            const reward = 25;
+            showClaimModal(taskName, reward, async function() {
+                await updateUser({ paymentProofClaimed: true, balance: (userData.balance || 0) + reward,
+                    totalEarned: (userData.totalEarned || 0) + reward, tasksCompleted: (userData
+                        .tasksCompleted || 0) + 1 });
+                await addEarningEntry(reward, taskName);
+                showToast(reward, taskName);
+                document.getElementById('paymentProofTaskContainer')?.remove();
+                refreshUI();
+            });
+        };
+
+        // --- CPM / CPM2 tasks ---
+        document.getElementById('contactAdminBtn').onclick = () => window.open('https://t.me/pedoadmin12', '_blank');
+        document.getElementById('contactAdminCpm2Btn').onclick = () => window.open('https://t.me/pedoadmin12',
+        '_blank');
+        document.getElementById('openCpmLinkBtn').onclick = () => window.open(
+            'https://www.effectivecpmnetwork.com/gewesnb5e?key=d5843587772f12547c46a6d88d3f7d7d', '_blank');
+        document.getElementById('openCpm2LinkBtn').onclick = () => window.open('https://omg10.com/4/10883007', '_blank');
+
+        document.getElementById('submitCpmTaskBtn').onclick = async () => {
+            let un = document.getElementById('cpmUsernameInput').value.trim();
+            if (!un.startsWith('@')) return alert('Valid @username required');
+            let now = Date.now();
+            if (userData.lastCpmSubmission && now - userData.lastCpmSubmission < 48 * 3600000) return alert(
+                'Cooldown 2 days');
+            let sub = { id: now, userId: telegramId, username: un, status: 'pending', timestamp: now, type: 'cpm' };
+            await db.ref('specialSubmissions/' + sub.id).set(sub);
+            await updateUser({ cpmSubmission: { id: sub.id, status: 'pending', username: un, timestamp: now },
+                lastCpmSubmission: now });
+            alert('Submitted! Admin will review.');
+            refreshUI();
+        };
+        document.getElementById('submitCpm2TaskBtn').onclick = async () => {
+            let un = document.getElementById('cpm2UsernameInput').value.trim();
+            if (!un.startsWith('@')) return alert('Valid @username required');
+            let now = Date.now();
+            if (userData.lastCpm2Submission && now - userData.lastCpm2Submission < 48 * 3600000) return alert(
+                'Cooldown 2 days');
+            let sub = { id: now, userId: telegramId, username: un, status: 'pending', timestamp: now, type: 'cpm2' };
+            await db.ref('specialSubmissions/' + sub.id).set(sub);
+            await updateUser({ cpm2Submission: { id: sub.id, status: 'pending', username: un, timestamp: now },
+                lastCpm2Submission: now });
+            alert('Submitted! Admin will review.');
+            refreshUI();
+        };
+        document.getElementById('howtoSpecial1Btn').onclick = () => window.open(
+            'https://youtube.com/shorts/Gjo2uiLiNTs?si=BiicArKGBvCfgVvG', '_blank');
+        document.getElementById('howtoSpecial2Btn').onclick = () => window.open(
+            'https://youtube.com/shorts/Gjo2uiLiNTs?si=BiicArKGBvCfgVvG', '_blank');
+
+        // --- Pending History ---
+        function renderPendingHistory() {
+            const container = document.getElementById('pendingHistoryList');
+            if (!container) return;
+            let subs = [];
+            if (userData.cpmSubmission) subs.push({ type: 'CPM Task', reward: '800 PEDO', ...userData.cpmSubmission,
+                detail: 'Username: ' + userData.cpmSubmission.username });
+            if (userData.cpm2Submission) subs.push({ type: 'CPM2 Task', reward: '800 PEDO', ...userData.cpm2Submission,
+                detail: 'Username: ' + userData.cpm2Submission.username });
+            if (subs.length === 0) {
+                container.innerHTML =
+                    '<div style="text-align:center;padding:20px;color:#64748b;">No pending submissions.</div>';
+                return;
+            }
+            let html = '';
+            subs.forEach(sub => {
+                const icon = sub.status === 'pending' ? '⏳' : (sub.status === 'approved' ? '✅' : '❌');
+                const text = sub.status === 'pending' ? 'Pending' : (sub.status === 'approved' ? 'Approved' :
+                    'Rejected');
+                const color = sub.status === 'pending' ? '#f97316' : (sub.status === 'approved' ? '#22c55e' :
+                    '#ef4444');
+                html += '<div class="pending-card" style="border-left-color:' + color + ';">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                    '<strong>' + sub.type + '</strong>' +
+                    '<span style="color:' + color + ';">' + icon + ' ' + text + '</span>' +
+                    '</div>' +
+                    '<div class="small-text" style="margin-top:6px;">Reward: ' + sub.reward + '</div>' +
+                    '<div class="pending-detail-text">' + sub.detail + '</div>' +
+                    '<div class="small-text" style="margin-top:4px;">' + new Date(sub.id).toLocaleString() +
+                    '</div>' +
+                    '</div>';
+            });
+            container.innerHTML = html;
+        }
+
+        // --- Payment ---
+        let selectedMethod = 'binance';
+
+        function setPaymentMethod(method) {
+            selectedMethod = method;
+            document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
+            if (method === 'binance') document.getElementById('paymentMethodBinance').classList.add('selected');
+            if (method === 'bkash') document.getElementById('paymentMethodBkash').classList.add('selected');
+            if (method === 'nagad') document.getElementById('paymentMethodNagad').classList.add('selected');
+            document.getElementById('paymentAccount').placeholder = method === 'binance' ? 'Binance Email/UID' : (method ===
+                'bkash' ? 'bKash Mobile Number' : 'Nagad Mobile Number');
+        }
+        document.getElementById('paymentMethodBinance').onclick = () => setPaymentMethod('binance');
+        document.getElementById('paymentMethodBkash').onclick = () => setPaymentMethod('bkash');
+        document.getElementById('paymentMethodNagad').onclick = () => setPaymentMethod('nagad');
+
+        document.getElementById('submitWithdrawBtn').onclick = async () => {
+            let amt = parseInt(document.getElementById('withdrawAmount').value);
+            let acc = document.getElementById('paymentAccount').value.trim();
+            if (amt < 1000 || amt > (userData.balance || 0) || (userData.referrals?.length || 0) < 3) return alert(
+                'Requirements: Min 1000 PEDO, 3 referrals, sufficient balance');
+            let fee = Math.floor(amt * 0.1);
+            let wid = { id: Date.now(), withdrawId: 'WD-' + Date.now().toString().slice(-8), amount: amt, fee,
+                netAmount: amt - fee, method: selectedMethod, account: acc, status: 'pending', date: Date.now() };
+            await updateUser({ balance: (userData.balance || 0) - amt, withdrawalHistory: [...(userData
+                    .withdrawalHistory || []), wid] });
+            document.getElementById('withdrawSuccessDetails').innerHTML =
+                '<div>ID: ' + wid.withdrawId + '</div><div>Amount: ' + amt +
+                ' PEDO</div><div>Net: ' + (amt - fee) + ' PEDO (~$' + ((amt - fee) / EXCHANGE_RATE).toFixed(3) +
+                ')</div>';
+            document.getElementById('withdrawSuccessModal').classList.add('active');
+            refreshUI();
+        };
+        document.getElementById('closeSuccessModal').onclick = () => document.getElementById('withdrawSuccessModal')
+            .classList.remove('active');
+
+        // --- Navigation ---
+        function switchSection(id) {
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            if (id === 'homeSection') document.getElementById('navHome').classList.add('active');
+            if (id === 'earnSection') document.getElementById('navEarn').classList.add('active');
+            if (id === 'earningSection') document.getElementById('navEarning').classList.add('active');
+            if (id === 'cashoutSection') document.getElementById('navCashout').classList.add('active');
+            if (id === 'referralSection') document.getElementById('navReferral').classList.add('active');
+        }
+        document.getElementById('navHome').onclick = () => switchSection('homeSection');
+        document.getElementById('navEarn').onclick = () => switchSection('earnSection');
+        document.getElementById('navEarning').onclick = () => switchSection('earningSection');
+        document.getElementById('navCashout').onclick = () => switchSection('cashoutSection');
+        document.getElementById('navReferral').onclick = () => switchSection('referralSection');
+        document.getElementById('earnBackBtn').onclick = () => switchSection('homeSection');
+        document.getElementById('earningBackBtn').onclick = () => switchSection('homeSection');
+        document.getElementById('cashoutBackBtn').onclick = () => switchSection('homeSection');
+        document.getElementById('referralBackBtn').onclick = () => switchSection('referralSection');
+
+        ['supportIconHome', 'supportIconEarn', 'supportIconEarning', 'supportIconCashout', 'supportIconReferral'].forEach(
+            id => document.getElementById(id).onclick = () => window.open('https://t.me/pedosupport0','_blank'));
+
+           // --- Campaign / Business Team ---
+        document.getElementById('contactBusinessBtn').onclick = () => {
+            window.open('https://t.me/pedobusinessteam', '_blank');
+        };
+        document.getElementById('campaignCard').onclick = function(e) {
+            if (e.target.tagName !== 'BUTTON') {
+                window.open('https://t.me/pedobusinessteam', '_blank');
+            }
+        };
+
+        // --- Referral ---
+        document.getElementById('copyReferralCodeBtn').onclick = () => { navigator.clipboard.writeText(userData
+                .referralCode);
+            alert('Copied!'); };
+        document.getElementById('shareTelegramCodeBtn').onclick = () => { window.open(
+                'https://t.me/share/url?url=Join%20Pedo%20Earn%20with%20code%3A%20' + userData.referralCode,
+                '_blank'); };
+
+        // --- Admin ---
+        let isAdmin = false;
+        document.getElementById('adminTrigger').onclick = () => {
+            if (!isAdmin) { let pwd = prompt('Admin password:'); if (pwd !== 'admin123') return;
+                isAdmin = true; }
+            db.ref('specialSubmissions').once('value', snap => {
+                let subs = [];
+                snap.forEach(c => subs.push({ id: c.key, ...c.val() }));
+                let html = subs.map(s =>
+                    '<div style="border-bottom:1px solid #eee;padding:10px;">' +
+                    '<div><strong>User:</strong> ' + s.userId + '</div>' +
+                    '<div><strong>Type:</strong> ' + s.type + '</div>' +
+                    (s.username ? '<div>User: ' + s.username + '</div>' : '') +
+                    '<div>Status: ' + s.status + '</div>' +
+                    '<button onclick="window.approveSubmission(\'' + s.id + '\',\'' + s.userId + '\',\'' + s
+                    .type + '\')" style="background:green;color:white;border:none;padding:5px 12px;border-radius:20px;margin-right:6px;">Approve</button>' +
+                    '<button onclick="window.rejectSubmission(\'' + s.id + '\',\'' + s.userId + '\',\'' + s
+                    .type + '\')" style="background:red;color:white;border:none;padding:5px 12px;border-radius:20px;">Reject</button>' +
+                    '</div>'
+                ).join('');
+                document.getElementById('adminSubmissionsList').innerHTML = html;
+                document.getElementById('adminModal').classList.add('active');
+            });
+        };
+        window.approveSubmission = async (subId, userId, type) => {
+            let sub = (await db.ref('specialSubmissions/' + subId).once('value')).val();
+            if (!sub || sub.status !== 'pending') return;
+            await db.ref('specialSubmissions/' + subId).update({ status: 'approved' });
+            let reward = (type === 'cpm' || type === 'cpm2') ? 800 : 0;
+            let userRef = db.ref('users/' + userId);
+            let userSnap = await userRef.once('value');
+            if (userSnap.exists()) {
+                let user = userSnap.val();
+                let newBal = (user.balance || 0) + reward;
+                let updates = { balance: newBal, totalEarned: (user.totalEarned || 0) + reward, tasksCompleted: (user
+                        .tasksCompleted || 0) + 1 };
+                if (type === 'cpm') updates['cpmSubmission/status'] = 'approved';
+                else if (type === 'cpm2') updates['cpm2Submission/status'] = 'approved';
+                await userRef.update(updates);
+                let histEntry = { id: Date.now(), amount: reward, description: type + ' Task approved (+' + reward +
+                        ' PEDO)', date: Date.now() };
+                let newHist = [histEntry, ...(user.earningsHistory || [])].slice(0, 200);
+                await userRef.update({ earningsHistory: newHist });
+                if (userId === telegramId) refreshUI();
+            }
+            alert('Approved! +' + reward + ' PEDO');
+            document.getElementById('adminModal').classList.remove('active');
+        };
+        window.rejectSubmission = async (subId, userId, type) => {
+            await db.ref('specialSubmissions/' + subId).update({ status: 'rejected' });
+            alert('Rejected');
+        };
+        document.getElementById('closeAdminModal').onclick = () => document.getElementById('adminModal').classList.remove(
+            'active');
+
+        document.getElementById('withdrawAmount').addEventListener('input', () => {
+            let amt = parseInt(document.getElementById('withdrawAmount').value) || 0;
+            let fee = Math.floor(amt * 0.1);
+            document.getElementById('wdAmount').innerText = amt + ' PEDO';
+            document.getElementById('wdFee').innerText = fee + ' PEDO';
+            document.getElementById('wdNet').innerText = (amt - fee) + ' PEDO';
+            document.getElementById('wdUsdValue').innerText = '$' + ((amt - fee) / EXCHANGE_RATE).toFixed(3);
+        });
+
+        // --- Referral code modal ---
+        document.getElementById('submitReferralCodeBtn').onclick = async () => {
+            let code = document.getElementById('referralCodeInput').value.trim().toUpperCase();
+            if (code) {
+                let snap = await db.ref('users').orderByChild('referralCode').equalTo(code).once('value');
+                if (snap.exists()) {
+                    let refId = Object.keys(snap.val())[0];
+                    if (refId !== telegramId) {
+                        await updateUser({ referredBy: refId, referralBonusApplied: true, balance: (userData
+                                .balance || 0) + 100, totalEarned: (userData.totalEarned || 0) + 100,
+                            referralBonusEarned: (userData.referralBonusEarned || 0) + 100 });
+                        let refSnap = await db.ref('users/' + refId).once('value');
+                        if (refSnap.exists()) {
+                            let refs = refSnap.val().referrals || [];
+                            if (!refs.some(r => r.id === telegramId)) refs.push({ id: telegramId, username: telegramUsername,
+                                bonus: 100 });
+                            await db.ref('users/' + refId).update({ referrals: refs, balance: (refSnap.val()
+                                    .balance || 0) + 100, referralBonusEarned: (refSnap.val()
+                                    .referralBonusEarned || 0) + 100 });
+                        }
+                        alert('+100 PEDO bonus!');
+                    }
+                }
+            }
+            proceedToApp();
+        };
+        document.getElementById('skipReferralCodeBtn').onclick = async () => { await updateUser({ referralBonusApplied: true });
+            proceedToApp(); };
+
+        // --- Init ---
+        async function initUser() {
+            let data = await fetchUserData();
+            if (!data) {
+                let refCode = telegramUsername.slice(0, 4).toUpperCase() + Math.random().toString(36).substr(2, 5)
+                    .toUpperCase();
+                let newUser = {
+                    username: telegramUsername,
+                    telegramId: telegramId,
+                    balance: 0,
+                    totalEarned: 0,
+                    referralBonusEarned: 0,
+                    referrals: [],
+                    referralCode: refCode,
+                    referredBy: null,
+                    referralBonusApplied: false,
+                    tasksCompleted: 0,
+                    withdrawalHistory: [],
+                    earningsHistory: [],
+                    ads1Progress: 0,
+                    ads2Progress: 0,
+                    ads3Progress: 0,
+                    ads4Progress: 0,
+                    ads5Progress: 0,
+                    ads6Progress: 0,
+                    ads7Progress: 0,
+                    ads8Progress: 0,
+                    ads9Progress: 0,
+                    ads10Progress: 0,
+                    surveyProgress: 0,
+                    pedoYoutubeClaimed: false,
+                    pedoChannelClaimed: false,
+                    paymentProofClaimed: false,
+                    cpmSubmission: null,
+                    cpm2Submission: null,
+                    lastCpmSubmission: 0,
+                    lastCpm2Submission: 0,
+                    lastResetDate: new Date().toDateString()
+                };
+                await db.ref('users/' + telegramId).set(newUser);
+                data = newUser;
+            }
+            userData = data;
+            if (!Array.isArray(userData.earningsHistory)) userData.earningsHistory = [];
+            if (!Array.isArray(userData.withdrawalHistory)) userData.withdrawalHistory = [];
+            if (!Array.isArray(userData.referrals)) userData.referrals = [];
+            // Daily reset
+            const today = new Date().toDateString();
+            if (userData.lastResetDate !== today) {
+                await updateUser({
+                    ads1Progress: 0,
+                    ads2Progress: 0,
+                    ads3Progress: 0,
+                    ads4Progress: 0,
+                    ads5Progress: 0,
+                    ads6Progress: 0,
+                    ads7Progress: 0,
+                    ads8Progress: 0,
+                    ads9Progress: 0,
+                    ads10Progress: 0,
+                    surveyProgress: 0,
+                    lastResetDate: today
+                });
+            }
+            await db.ref('users/' + telegramId).update({ earningsHistory: userData.earningsHistory,
+                withdrawalHistory: userData.withdrawalHistory, referrals: userData.referrals });
+            if (!userData.referralBonusApplied) document.getElementById('referralCodeModal').style.display = 'flex';
+            else proceedToApp();
+        }
+
+        async function proceedToApp() {
+            document.getElementById('referralCodeModal').style.display = 'none';
+            refreshUI();
+            db.ref('users/' + telegramId).on('value', snap => {
+                if (snap.exists()) { userData = snap.val(); if (!Array.isArray(userData.earningsHistory)) userData
+                        .earningsHistory = [];
+                    refreshUI(); }
+            });
+        }
+
+        let loadPercent = 0;
+        const loadInterval = setInterval(() => {
+            loadPercent++;
+            document.getElementById('loadingFill').style.width = loadPercent + '%';
+            document.getElementById('loadingPercent').innerText = loadPercent + '%';
+            if (loadPercent >= 100) {
+                clearInterval(loadInterval);
+                initUser().catch(console.error).finally(() => {
+                    setTimeout(() => {
+                        document.getElementById('loadingScreen').classList.add('hidden');
+                        document.getElementById('mainApp').style.display = 'block';
+                    }, 300);
+                });
+            }
+        }, 50);
+    </script>
+</body>
+</html>
